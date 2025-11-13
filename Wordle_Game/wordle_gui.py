@@ -4,20 +4,28 @@ import json
 import random
 import time
 from datetime import datetime
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+import json
+import random
+import time
+from datetime import datetime
 from pathlib import Path
 
 WORDS_FILE = Path("words.txt")
+ALL_WORDS_FILE = Path("All_the_Words.txt")
 PLACEMATE_FILE = Path("placemate.json")
 ATTEMPTS = 6
 
 # Window size (modify these to change the window dimensions)
 WINDOW_WIDTH = 500   # Width in pixels
-WINDOW_HEIGHT = 600  # Height in pixels
+WINDOW_HEIGHT = 750  # Height in pixels (increased for keyboard)
 
 # Colors for feedback
 COLOR_GREEN = "#6aaa64"
 COLOR_YELLOW = "#c9b458"
 COLOR_GRAY = "#787c7e"
+COLOR_DEFAULT = "#d3d6da"
 
 def load_words(path):
     if not path.exists():                   # back up if the file is missing
@@ -30,7 +38,7 @@ def load_words(path):
             if len(w) == 5 and w.isalpha():
                 words.append(w)
     if not words:
-        messagebox.showerror("Error", "No valid 5-letter words found in words.txt")
+        messagebox.showerror("Error", f"No valid 5-letter words found in {path.name}")
     return words
 
 def load_placemate(path):
@@ -76,13 +84,18 @@ class WordleGUI(tk.Tk):         # Main application class
         self.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")            # Set window size
         self.resizable(False, False)
         
-        self.words = load_words(WORDS_FILE)
+        # Load two word lists
+        self.target_words = load_words(WORDS_FILE)  # Small list for secret word
+        self.valid_words = load_words(ALL_WORDS_FILE)  # Large list for guess validation
         self.player_name = ""
         self.leaderboard = []
         self.target = ""
         self.start_time = 0.0
         self.attempt = 1
         self.guess_rows = []  # For game screen
+        self.details_label = None  # Store reference to details label
+        self.keyboard_buttons = {}  # Store keyboard button references
+        self.letter_status = {}  # Track letter colors (green, yellow, gray)
         
         self._build_main_screen()
     
@@ -123,9 +136,16 @@ class WordleGUI(tk.Tk):         # Main application class
         if not player_name:
             player_name = "Anonymous"
         self.player_name = player_name
-        self.target = random.choice(self.words)  # Choose target word
+        
+        if not self.target_words:
+            messagebox.showerror("Error", "No target words available (words.txt). Cannot start game.")
+            self._build_main_screen()
+            return
+        
+        self.target = random.choice(self.target_words)  # Choose target from words.txt
         self.start_time = time.perf_counter()    # Start timer
         self.attempt = 1
+        self.letter_status = {}  # Reset letter status
         self._build_game_screen()
     
     def _build_game_screen(self):                # Build the game screen
@@ -133,11 +153,11 @@ class WordleGUI(tk.Tk):         # Main application class
         top = tk.Frame(self)                     # Top frame for player info   
         top.pack(anchor="center", pady=8)
         details = f"Player: {self.player_name}   Attempts: {self.attempt}/{ATTEMPTS}"
-        ttk = tk.Label(top, text=details, font=("Arial", 14))
-        ttk.pack()
+        self.details_label = tk.Label(top, text=details, font=("Arial", 14))
+        self.details_label.pack()
         
-        self.time_label = tk.Label(top, text="Time: 0s", font=("Arial", 14))
-        self.time_label.pack()
+        # Time label removed from display - timer still runs in background
+
         self._update_timer()  # Start the timer
 
         game_frame = tk.Frame(self)         # Frame for guesses
@@ -154,7 +174,7 @@ class WordleGUI(tk.Tk):         # Main application class
             self.guess_rows.append(row)     # store row widgets
 
         entry_frame = tk.Frame(self)        # Frame for guess entry
-        entry_frame.pack(pady=18)
+        entry_frame.pack(pady=12)
         self.guess_var = tk.StringVar()     # Variable for guess entry
         guess_entry = tk.Entry(entry_frame, textvariable=self.guess_var, font=("Arial", 16), justify="center", width=8) # Entry field
         guess_entry.grid(row=0, column=0)
@@ -162,23 +182,84 @@ class WordleGUI(tk.Tk):         # Main application class
         guess_entry.bind("<Return>", lambda e: self._handle_guess())            # Bind Enter key to submit guess
         guess_btn = tk.Button(entry_frame, text="Guess", font=("Arial", 16), width=8, command=self._handle_guess)
         guess_btn.grid(row=0, column=1, padx=6)
+        
         self.feedback_label = tk.Label(self, text="", font=("Arial", 13), fg="red") # Feedback label
         self.feedback_label.pack(pady=2)
+        
+        # Build on-screen keyboard
+        self._build_keyboard()
+        
         back_btn = tk.Button(self, text="Back", font=("Arial", 12), command=self._build_main_screen)
         back_btn.pack(side="bottom", pady=8)
+    
+    def _build_keyboard(self):
+        """Build the on-screen keyboard"""
+        keyboard_frame = tk.Frame(self)  # Frame for keyboard
+        keyboard_frame.pack(pady=8)      # pack it with padding
+        
+        # Keyboard layout
+        rows = [
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+            ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
+        ]
+        
+        for row in rows:            # create each row
+            row_frame = tk.Frame(keyboard_frame)   
+            row_frame.pack(pady=2) 
+            for letter in row:             # create button for each letter
+                btn = tk.Button(
+                    row_frame,
+                    text=letter,
+                    font=("Arial", 10, "bold"),
+                    width=4,
+                    height=2,
+                    bg=COLOR_DEFAULT,
+                    fg="black",
+                    relief="raised",
+                    bd=1
+                )
+                btn.pack(side="left", padx=1)  # pack button
+                self.keyboard_buttons[letter] = btn # Store button reference
+    
+    def _update_keyboard_colors(self, guess, feedback_colors):  
+        """Update keyboard button colors based on guess feedback"""
+        for i, letter in enumerate(guess):      # iterate over each letter in the guess
+            letter_upper = letter.upper()
+            color = feedback_colors[i]
+            
+            # Update letter status - green always takes precedence, then yellow, then gray
+            if letter_upper in self.letter_status:
+                current = self.letter_status[letter_upper]
+                # Priority: green > yellow > gray
+                if color == COLOR_GREEN:
+                    self.letter_status[letter_upper] = COLOR_GREEN
+                elif color == COLOR_YELLOW and current != COLOR_GREEN:
+                    self.letter_status[letter_upper] = COLOR_YELLOW
+                elif color == COLOR_GRAY and current == COLOR_DEFAULT:
+                    self.letter_status[letter_upper] = COLOR_GRAY
+            else:
+                self.letter_status[letter_upper] = color
+            
+            # Update button color
+            if letter_upper in self.keyboard_buttons:
+                btn = self.keyboard_buttons[letter_upper]
+                btn.config(bg=self.letter_status[letter_upper], fg="white")
     
     def _update_timer(self):                # Update the timer
         if self.start_time > 0:
             elapsed = time.perf_counter() - self.start_time
-            self.time_label.config(text=f"Time: {elapsed:.1f}s")
             self.after(100, self._update_timer)  # Update every 100ms
+    
     def _handle_guess(self):                # Handle a guess submission
         guess = self.guess_var.get().strip().lower()
         if len(guess) != 5 or not guess.isalpha():          # check input validity
             self.feedback_label.config(text="Please enter exactly 5 letters.")
             return
-       # if guess not in self.words:
-            self.feedback_label.config(text="Word not in list.")
+        
+        # Validate guess against All_the_Words.txt
+        if guess not in self.valid_words:
+            self.feedback_label.config(text="Word doesn't exist in the database.")
             return
 
         # Show the guess in the appropriate row
@@ -187,7 +268,11 @@ class WordleGUI(tk.Tk):         # Main application class
         for i in range(5):                                               # update each letter label
             row_widgets[i].config(text=guess[i].upper(),            
                                    bg=colorings[i],     
-                                   fg="white" if colorings[i] != "white" else "black")              
+                                   fg="white" if colorings[i] != "white" else "black")
+        
+        # Update keyboard colors
+        self._update_keyboard_colors(guess, colorings)
+        
         self.feedback_label.config(text="")
         self.guess_var.set("")  # Clear the entry field
 
@@ -202,12 +287,7 @@ class WordleGUI(tk.Tk):         # Main application class
             self._build_main_screen()
         else:
             details = f"Player: {self.player_name}   Attempts: {self.attempt}/{ATTEMPTS}"               # update attempts display
-            for widget in self.winfo_children():                                                        # update top label
-                if isinstance(widget, tk.Frame):            
-                    # Find relevant label
-                    for child in widget.winfo_children():                                               # iterate children
-                        if isinstance(child, tk.Label) and "Attempts" in child.cget("text"):            # find label
-                            child.config(text=details)
+            self.details_label.config(text=details)
 
     def _format_feedback(self, guess, target):                                                          # Format feedback for a guess
         feedback = [""] * 5
@@ -296,3 +376,5 @@ if __name__ == "__main__":
     
     app = WordleGUI()
     app.mainloop()
+from pathlib import Path
+
