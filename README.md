@@ -48,3 +48,13 @@ Run the script in your terminal. The game uses colored background text to provid
 
 ```bash
 python Wordle.py
+
+### Option 2: Run the graphical interface. It features a start menu, a visual grid, and a real-time timer.
+```bash
+python wordle_gui.py
+
+## Customizing Window Size:
+You can optionally pass width and height arguments to the GUI script:
+```bash
+# Usage: python wordle_gui.py [width] [height]
+python wordly_gui.py600 700
