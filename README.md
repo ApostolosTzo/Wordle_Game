@@ -70,5 +70,5 @@ This game focuses on speed. Both versions of the game read from and write to `pl
 * **New Players:** If you are new, your name and time are added to the file.
 * **Returning Players:** The system checks your previous records. It only updates your entry if you achieve a **New Personal Best** (faster time).
 * **View Leaderboard**:
-   * **CLI:** The top 10 times are printed at the start of the script.
-   * **GUI:** Click the "Leaderboard" button in the main menu.
+   * ⬜ **CLI:** The top 10 times are printed at the start of the script.
+   * ⬜ **GUI:** Click the "Leaderboard" button in the main menu.
