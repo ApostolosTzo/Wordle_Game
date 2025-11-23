@@ -50,6 +50,10 @@ Run the script in your terminal. The game uses colored background text to provid
 python Wordle.py
 ```
 
+---
+
+##🏆 Leaderboard System (Placemate)
+This game focuses on speed. Both versions of the game read from and write to `placemate.json`
 ### Option 2: Run the graphical interface. It features a start menu, a visual grid, and a real-time timer.
 ```bash
 python wordle_gui.py
