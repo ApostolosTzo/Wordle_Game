@@ -64,7 +64,7 @@ python wordly_gui.py600 700
 
 ---
 
-##🏆 Leaderboard System (Placemate)
+## 🏆 Leaderboard System (Placemate)
 This game focuses on speed. Both versions of the game read from and write to `placemate.json`
 
 * **New Players:** If you are new, your name and time are added to the file.
