@@ -50,11 +50,17 @@ Run the script in your terminal. The game uses colored background text to provid
 ```bash
 python Wordle.py
 ```
+1. You will be prompted to select a difficulty( 1 for Easy, 2 for Medium).
+2. Enter your name for the Leaderboard.
+3. Type your guesses into the terminal.
 
 ### Option 2: Run the graphical interface. It features a start menu, a visual grid, and a real-time timer.
 ```bash
 python wordle_gui.py
 ```
+1. **Select Difficulty:** Use the radio buttons on the main menu to choose **Easy** (6 attempts) or **Medium** (4 attempts).
+2. **Start Game:** Click "Start", enter your name, and play using the on-screen grid or your keyboard.
+3. **Timer:** A real-time timer tracks your solve speed.
 
 ## Customizing Window Size:
 You can optionally pass width and height arguments to the GUI script:
@@ -68,6 +74,7 @@ python wordly_gui.py600 700
 ## 🏆 Leaderboard System (Placemate)
 This game focuses on speed. Both versions of the game read from and write to `placemate.json`
 
+* **Difficulty Tracking:** The leaderboard now separates records by mode. You can view the top times for Easy and Medium separetely.
 * **New Players:** If you are new, your name and time are added to the file.
 * **Returning Players:** The system checks your previous records. It only updates your entry if you achieve a **New Personal Best** (faster time).
 * **View Leaderboard**:
