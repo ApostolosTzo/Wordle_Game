@@ -23,7 +23,8 @@ Both versions feature a persistent **Leaderboard (Placemate)** that tracks the f
 | :--- | :--- |
 | `Wordle.py` | The **Command Line Interface** (CLI) version of the game. Uses ANSI escape codes for colored text. |
 | `wordle_gui.py` | The **Graphical User Interface** (GUI) version. Built using Python's native `tkinter` library. |
-| `words.txt` | The dictionary file containing valid 5-letter words used for both guesses and targets. |
+| `words_easy_mode.txt` | Target words for the Easy difficulty setting. |
+| `words_medium_mode.txxt` | Target words for the medium difficulty settings. |
 | `placemate.json` | A JSON database that stores player records (Name, Time, Date) for the leaderboard. |
 
 ---
